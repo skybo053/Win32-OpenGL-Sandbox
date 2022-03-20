@@ -1,0 +1,7 @@
+*.sln
+x64
+Debug
+WindowsOpenGLSandbox/Debug
+WindowsOpenGLSandbox/WindowsOpenGLSandbox.vcxproj
+WindowsOpenGLSandbox/WindowsOpenGLSandbox.vcxproj.filters
+WindowsOpenGLSandbox/WindowsOpenGLSandbox.vcxproj.user
