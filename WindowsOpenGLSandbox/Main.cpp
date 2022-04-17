@@ -5,6 +5,13 @@
 #include <thread>
 #include <glm/glm.hpp>
 
+struct Vertex
+{
+  Vertex(const glm::vec3& pPosition, const glm::vec4& pColor) : position(pPosition), color(pColor) {}
+
+  glm::vec3 position;
+  glm::vec4 color;
+};
 
 HWND createWindow(const HINSTANCE& pHInstance);
 BOOL initOpenGL(HWND pHwnd, HDC pDeviceContext);
@@ -12,12 +19,6 @@ LRESULT WINAPI WindowProc(HWND pHwnd, UINT pUInt, WPARAM pWParam, LPARAM pLParam
 std::string loadShader(const char* pShaderFileName);
 void initShaders();
 
-
-//dynamic triangle drawing data
-const float TRIANGLE_X_DELTA = 0.5F;
-
-int NUM_TRIANGLES = 0;
-//
 
 /*
  *
@@ -53,23 +54,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine,
   
   glEnable(GL_DEPTH_TEST);
 
-  float vBufferData[] = 
+  Vertex vBufferData[] = 
   {
-    -1.0F,   1.0F, 0.0F,      1.0F, 0.0F, 0.0F, 1.0F,
-    -0.75F,  0.0F, 0.0F,      1.0F, 0.0F, 0.0F, 1.0F,
-    -0.5F,   1.0F, 0.0F,      1.0F, 0.0F, 0.0F, 1.0F,
-
-    -0.5F,  1.0F, 0.0F,      1.0F, 0.0F, 0.0F, 1.0F,
-    -0.25F, 0.0F, 0.0F,      1.0F, 0.0F, 0.0F, 1.0F,
-     0.0F,  1.0F, 0.0F,      1.0F, 0.0F, 0.0F, 1.0F,
-
-    0.0F,  1.0F, 0.0F,      1.0F, 0.0F, 0.0F, 1.0F,
-    0.25F, 0.0F, 0.0F,      1.0F, 0.0F, 0.0F, 1.0F,
-    0.5F,  1.0F, 0.0F,      1.0F, 0.0F, 0.0F, 1.0F,
-
-    0.5F,  1.0F, 0.0F,      1.0F, 0.0F, 0.0F, 1.0F,
-    0.75F, 0.0F, 0.0F,      1.0F, 0.0F, 0.0F, 1.0F,
-    1.0F,  1.0F, 0.0F,      1.0F, 0.0F, 0.0F, 1.0F,
+    { glm::vec3(-1.0F, -1.0F, 0.0F),    glm::vec4(0.0F, 1.0F, 0.0F, 1.0F) },
+    { glm::vec3(1.0F, -1.0F, 0.0F),     glm::vec4(0.0F, 0.0F, 1.0F, 1.0F) },
+    { glm::vec3(0.0F,  1.0F, 0.0F),     glm::vec4(1.0F, 0.0F, 0.0F, 1.0F) }
   };
 
   GLuint vVertexBufferId;
@@ -78,7 +67,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine,
 
   glBindBuffer(GL_ARRAY_BUFFER, vVertexBufferId);
 
-  glBufferData(GL_ARRAY_BUFFER, 10000, NULL, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(vBufferData), vBufferData, GL_STATIC_DRAW);
 
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 7, 0);
@@ -106,22 +95,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine,
     
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-    float vBufferData[] =
-    {
-      -1.0F  + (NUM_TRIANGLES * TRIANGLE_X_DELTA), 1.0F, 0.0F,      1.0F, 0.0F, 0.0F, 1.0F,
-      -0.75F + (NUM_TRIANGLES * TRIANGLE_X_DELTA), 0.0F, 0.0F,      1.0F, 0.0F, 0.0F, 1.0F,
-      -0.5F  + (NUM_TRIANGLES * TRIANGLE_X_DELTA), 1.0F, 0.0F,      1.0F, 0.0F, 0.0F, 1.0F
-    };
-    
-    glBufferSubData(GL_ARRAY_BUFFER, /*NUM_TRIANGLES * sizeof(vBufferData)*/ 0, sizeof(vBufferData), vBufferData);
-
-    ++NUM_TRIANGLES;
-
-    glDrawArrays(GL_TRIANGLES, 0, NUM_TRIANGLES * 3);
+    glDrawArrays(GL_TRIANGLES, 0, 3);
     
     SwapBuffers(vDeviceContext);
-
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   }
   
   return 0;
