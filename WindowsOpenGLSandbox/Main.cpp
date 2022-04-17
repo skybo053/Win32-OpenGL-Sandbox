@@ -2,12 +2,22 @@
 #include <Windows.h>
 #include <glad/glad.h>
 #include <memory>
+#include <thread>
+#include <glm/glm.hpp>
+
 
 HWND createWindow(const HINSTANCE& pHInstance);
 BOOL initOpenGL(HWND pHwnd, HDC pDeviceContext);
 LRESULT WINAPI WindowProc(HWND pHwnd, UINT pUInt, WPARAM pWParam, LPARAM pLParam);
 std::string loadShader(const char* pShaderFileName);
 void initShaders();
+
+
+//dynamic triangle drawing data
+const float TRIANGLE_X_DELTA = 0.5F;
+
+int NUM_TRIANGLES = 0;
+//
 
 /*
  *
@@ -68,7 +78,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine,
 
   glBindBuffer(GL_ARRAY_BUFFER, vVertexBufferId);
 
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vBufferData), vBufferData, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, 10000, NULL, GL_STATIC_DRAW);
 
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 7, 0);
@@ -76,7 +86,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine,
   glEnableVertexAttribArray(1);
   glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(float) * 7, (void*)(sizeof(float) * 3));
 
-  /////////////// end opengl info
 
 
   MSG  vMsg;
@@ -94,16 +103,27 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine,
       TranslateMessage(&vMsg);
       DispatchMessage(&vMsg);
     }
+    
+    glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-    glClear(GL_DEPTH_BUFFER_BIT);
+    float vBufferData[] =
+    {
+      -1.0F  + (NUM_TRIANGLES * TRIANGLE_X_DELTA), 1.0F, 0.0F,      1.0F, 0.0F, 0.0F, 1.0F,
+      -0.75F + (NUM_TRIANGLES * TRIANGLE_X_DELTA), 0.0F, 0.0F,      1.0F, 0.0F, 0.0F, 1.0F,
+      -0.5F  + (NUM_TRIANGLES * TRIANGLE_X_DELTA), 1.0F, 0.0F,      1.0F, 0.0F, 0.0F, 1.0F
+    };
+    
+    glBufferSubData(GL_ARRAY_BUFFER, /*NUM_TRIANGLES * sizeof(vBufferData)*/ 0, sizeof(vBufferData), vBufferData);
 
-    //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-    glDrawArrays(GL_TRIANGLES, 0, 12);
+    ++NUM_TRIANGLES;
 
+    glDrawArrays(GL_TRIANGLES, 0, NUM_TRIANGLES * 3);
+    
     SwapBuffers(vDeviceContext);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   }
-
-
+  
   return 0;
 }
 
