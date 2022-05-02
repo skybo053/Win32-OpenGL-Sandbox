@@ -1,17 +1,9 @@
 #include <iostream>
 #include <Windows.h>
-#include <glad/glad.h>
 #include <memory>
 #include <thread>
-#include <glm/glm.hpp>
+#include "Geometries.h" //includes glm and openGL
 
-struct Vertex
-{
-  Vertex(const glm::vec3& pPosition, const glm::vec4& pColor) : position(pPosition), color(pColor) {}
-
-  glm::vec3 position;
-  glm::vec4 color;
-};
 
 HWND createWindow(const HINSTANCE& pHInstance);
 BOOL initOpenGL(HWND pHwnd, HDC pDeviceContext);
@@ -54,20 +46,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine,
   
   glEnable(GL_DEPTH_TEST);
 
-  Vertex vBufferData[] = 
-  {
-    { glm::vec3(-1.0F, -1.0F, 0.0F),    glm::vec4(0.0F, 1.0F, 0.0F, 1.0F) },
-    { glm::vec3(1.0F, -1.0F, 0.0F),     glm::vec4(0.0F, 0.0F, 1.0F, 1.0F) },
-    { glm::vec3(0.0F,  1.0F, 0.0F),     glm::vec4(1.0F, 0.0F, 0.0F, 1.0F) }
-  };
+  ShapeData vShapeData = ShapeGenerator::generateTriangle();
 
   GLuint vVertexBufferId;
+  GLuint vIndexBufferId;
 
   glGenBuffers(1, &vVertexBufferId);
+  glGenBuffers(1, &vIndexBufferId);
 
   glBindBuffer(GL_ARRAY_BUFFER, vVertexBufferId);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vIndexBufferId);
 
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vBufferData), vBufferData, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, vShapeData.getVertexBufferSize(), vShapeData.vertices, GL_STATIC_DRAW);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, vShapeData.getIndexBufferSize(), vShapeData.indices, GL_STATIC_DRAW);
 
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 7, 0);
@@ -76,8 +67,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine,
   glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(float) * 7, (void*)(sizeof(float) * 3));
 
 
-
-  MSG  vMsg;
+  MSG vMsg;
   vRunning = 1;
   while(vRunning)
   {
@@ -95,7 +85,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine,
     
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+    
+    glDrawArrays(GL_TRIANGLES, 0, vShapeData.numVertices);
+    //glDrawElements(GL_TRIANGLES, vShapeData.numIndices, GL_UNSIGNED_INT, 0);
     
     SwapBuffers(vDeviceContext);
   }
@@ -199,4 +191,12 @@ void initShaders()
   glAttachShader(vProgramId, vFragmentShaderId);
   glLinkProgram(vProgramId);
   glUseProgram(vProgramId);
+
+  //setting up a uniform color
+  
+  glm::vec4 vUniformColor(1.0F, 0.0F, 0.0F, 0.0F);
+  
+  GLint vUniformLocation = glGetUniformLocation(vProgramId, "allRedColor");
+
+  glUniform4f(vUniformLocation, vUniformColor.r, vUniformColor.g, vUniformColor.b, vUniformColor.a);
 }
