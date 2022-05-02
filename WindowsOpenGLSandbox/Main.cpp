@@ -9,7 +9,7 @@ HWND createWindow(const HINSTANCE& pHInstance);
 BOOL initOpenGL(HWND pHwnd, HDC pDeviceContext);
 LRESULT WINAPI WindowProc(HWND pHwnd, UINT pUInt, WPARAM pWParam, LPARAM pLParam);
 std::string loadShader(const char* pShaderFileName);
-void initShaders();
+GLuint initShaders();
 
 
 /*
@@ -19,10 +19,11 @@ void initShaders();
 */
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, INT nCmdShow)
 {
-  HWND vHwnd          = NULL;
-  HDC  vDeviceContext = NULL;
-  int  vResult        = NULL;
-  int  vRunning       = 0; 
+  HWND   vHwnd          = NULL;
+  HDC    vDeviceContext = NULL;
+  int    vResult        = NULL;
+  int    vRunning       = 0; 
+  GLuint vProgramId   = -1;
 
   vHwnd = createWindow(hInstance);
 
@@ -33,7 +34,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine,
   
   vDeviceContext = GetDC(vHwnd);
   vResult        = initOpenGL(vHwnd, vDeviceContext);
-  initShaders();
+  vProgramId     = initShaders();
 
   if(!vResult)
   {
@@ -66,6 +67,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine,
   glEnableVertexAttribArray(1);
   glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(float) * 7, (void*)(sizeof(float) * 3));
 
+  //setting up a uniforms
+  glm::vec4 vUniformColorRed(1.0F, 0.0F, 0.0F, 0.0F);
+  glm::vec4 vUniformColorBlue(0.0F, 0.0F, 1.0F, 0.0F);
+
+  GLint vUniformColorLocation   = glGetUniformLocation(vProgramId, "allRedColor");
+  GLint vUniformFlippedLocation = glGetUniformLocation(vProgramId, "flippedY");
+
 
   MSG vMsg;
   vRunning = 1;
@@ -85,8 +93,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine,
     
     glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-    
+    glUniform4f(vUniformColorLocation, vUniformColorRed.r, vUniformColorRed.g, vUniformColorRed.b, vUniformColorRed.a);
+    glUniform1f(vUniformFlippedLocation, 1.0F);
     glDrawArrays(GL_TRIANGLES, 0, vShapeData.numVertices);
+
+    glUniform4f(vUniformColorLocation, vUniformColorBlue.r, vUniformColorBlue.g, vUniformColorBlue.b, vUniformColorBlue.a);
+    glUniform1f(vUniformFlippedLocation, -1.0F);
+    glDrawArrays(GL_TRIANGLES, 0, vShapeData.numVertices);
+
+
+
     //glDrawElements(GL_TRIANGLES, vShapeData.numIndices, GL_UNSIGNED_INT, 0);
     
     SwapBuffers(vDeviceContext);
@@ -170,7 +186,7 @@ LRESULT CALLBACK WindowProc(HWND pHwnd, UINT pMsg, WPARAM pWParam, LPARAM pLPara
 }
 
 
-void initShaders()
+GLuint initShaders()
 {
   std::string vVertexShader   = loadShader("shaders/vertex_shader.glsl");
   std::string vFragmentShader = loadShader("shaders/fragment_shader.glsl");
@@ -192,11 +208,5 @@ void initShaders()
   glLinkProgram(vProgramId);
   glUseProgram(vProgramId);
 
-  //setting up a uniform color
-  
-  glm::vec4 vUniformColor(1.0F, 0.0F, 0.0F, 0.0F);
-  
-  GLint vUniformLocation = glGetUniformLocation(vProgramId, "allRedColor");
-
-  glUniform4f(vUniformLocation, vUniformColor.r, vUniformColor.g, vUniformColor.b, vUniformColor.a);
+  return vProgramId;
 }
